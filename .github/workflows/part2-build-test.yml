@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Part2-API
+        working-directory: .
 
     steps:
       - name: Checkout code
