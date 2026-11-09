@@ -9,6 +9,7 @@ public class ApiResult<T>
     public bool Success { get; set; }
     public T? Data { get; set; }
     public string Error { get; set; } = string.Empty;
+    public int StatusCode { get; set; }
 }
 
 public class ApiClient
@@ -28,19 +29,18 @@ public class ApiClient
     public Task<ApiResult<T>> PutAsync<T>(string url, object? body) => SendAsync<T>(HttpMethod.Put, url, body);
     public Task<ApiResult<T>> DeleteAsync<T>(string url) => SendAsync<T>(HttpMethod.Delete, url);
 
-    // For file uploads (banner image, profile picture)
+    // For file uploads (event banner, profile picture)
     public async Task<ApiResult<T>> UploadAsync<T>(string url, IFormFile file, HttpMethod? method = null)
     {
         try
         {
             using var content = new MultipartFormDataContent();
-            var stream = file.OpenReadStream();
-            var fileContent = new StreamContent(stream);
+            var fileContent = new StreamContent(file.OpenReadStream());
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
             content.Add(fileContent, "file", file.FileName);
 
             var req = new HttpRequestMessage(method ?? HttpMethod.Post, url) { Content = content };
-            AttachToken(req);
+            AttachCookie(req);
             var res = await _http.SendAsync(req);
             return await ReadResult<T>(res);
         }
@@ -57,7 +57,7 @@ public class ApiClient
             var req = new HttpRequestMessage(method, url);
             if (body != null)
                 req.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
-            AttachToken(req);
+            AttachCookie(req);
             var res = await _http.SendAsync(req);
             return await ReadResult<T>(res);
         }
@@ -67,31 +67,58 @@ public class ApiClient
         }
     }
 
-    private void AttachToken(HttpRequestMessage req)
+    // Send the API's session cookie (saved in this user's MVC session) with every request
+    private void AttachCookie(HttpRequestMessage req)
     {
-        var token = _ctx.HttpContext?.Session.GetString(SessionKeys.Token);
-        if (!string.IsNullOrEmpty(token))
-            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var cookie = _ctx.HttpContext?.Session.GetString(SessionKeys.ApiCookie);
+        if (!string.IsNullOrEmpty(cookie))
+            req.Headers.TryAddWithoutValidation("Cookie", cookie);
     }
 
-    private static async Task<ApiResult<T>> ReadResult<T>(HttpResponseMessage res)
+    // Save the cookie the API gives us (happens on login)
+    private void CaptureCookie(HttpResponseMessage res)
     {
-        if (!res.IsSuccessStatusCode)
-        {
-            var msg = (int)res.StatusCode switch
-            {
-                400 => "Some of the information provided is invalid.",
-                401 => "Please log in to continue.",
-                403 => "You don't have permission to do that.",
-                404 => "We couldn't find what you were looking for.",
-                409 => "That already exists or conflicts with existing data.",
-                _ => "Something went wrong. Please try again."
-            };
-            return new ApiResult<T> { Error = msg };
-        }
+        if (!res.Headers.TryGetValues("Set-Cookie", out var values)) return;
+        var pairs = values.Select(v => v.Split(';')[0].Trim()).Where(v => v.Length > 0);
+        var joined = string.Join("; ", pairs);
+        if (joined.Length > 0)
+            _ctx.HttpContext?.Session.SetString(SessionKeys.ApiCookie, joined);
+    }
 
+    private async Task<ApiResult<T>> ReadResult<T>(HttpResponseMessage res)
+    {
+        CaptureCookie(res);
         var text = await res.Content.ReadAsStringAsync();
+        var code = (int)res.StatusCode;
+
+        if (!res.IsSuccessStatusCode)
+            return new ApiResult<T> { StatusCode = code, Error = FriendlyError(code, text) };
+
         var data = string.IsNullOrWhiteSpace(text) ? default : JsonSerializer.Deserialize<T>(text, JsonOpts);
-        return new ApiResult<T> { Success = true, Data = data };
+        return new ApiResult<T> { Success = true, Data = data, StatusCode = code };
+    }
+
+    // Use the API's own friendly "message" if it sent one, otherwise a safe default
+    private static string FriendlyError(int code, string body)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.ValueKind == JsonValueKind.Object &&
+                doc.RootElement.TryGetProperty("message", out var m) &&
+                m.ValueKind == JsonValueKind.String)
+                return m.GetString()!;
+        }
+        catch { }
+
+        return code switch
+        {
+            400 => "Some of the information provided is invalid.",
+            401 => "Please log in to continue.",
+            403 => "You don't have permission to do that.",
+            404 => "We couldn't find what you were looking for.",
+            409 => "That already exists or conflicts with existing data.",
+            _ => "Something went wrong. Please try again."
+        };
     }
 }

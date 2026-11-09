@@ -15,7 +15,8 @@ builder.Services.AddSession(options =>
 builder.Services.AddHttpClient<ApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
-});
+})
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { UseCookies = false });
 
 var app = builder.Build();
 

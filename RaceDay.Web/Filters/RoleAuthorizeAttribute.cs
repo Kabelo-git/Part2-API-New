@@ -13,7 +13,7 @@ public class RoleAuthorizeAttribute : ActionFilterAttribute
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         var session = context.HttpContext.Session;
-        var token = session.GetString(SessionKeys.Token);
+        var token = session.GetString(SessionKeys.Role);
 
         if (string.IsNullOrEmpty(token))
         {
