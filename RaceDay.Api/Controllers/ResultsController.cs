@@ -45,17 +45,20 @@ public class ResultsController : ApiControllerBase
     }
 
     /// <summary>Lists your own results (Participant only).</summary>
-    /// <remarks>Expects no body. Returns your finish times and positions with the event names.</remarks>
+    /// <remarks>Expects no body. Returns your finish times and positions with the event name, date, category and total number of finishers.</remarks>
     [HttpGet("results/mine")]
     [SessionAuthorize(Roles.Participant)]
-    [ProducesResponseType(typeof(IEnumerable<ResultResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<MyResultDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Mine()
     {
         var list = await _db.Results.AsNoTracking()
             .Where(r => r.Enrolment.ParticipantId == CurrentUserId)
-            .Select(r => new ResultResponseDto(r.ResultId, r.EnrolmentId, r.Enrolment.ParticipantId,
-                r.Enrolment.Category.EventId, r.Enrolment.Category.Event.EventName, r.FinishTime, r.Position))
+            .Select(r => new MyResultDto(r.ResultId, r.EnrolmentId, r.Enrolment.ParticipantId,
+                r.Enrolment.Category.EventId, r.Enrolment.Category.Event.EventName,
+                r.Enrolment.Category.Event.EventDate, r.Enrolment.Category.CategoryName,
+                r.FinishTime, r.Position,
+                _db.Results.Count(x => x.Enrolment.Category.EventId == r.Enrolment.Category.EventId)))
             .ToListAsync();
         return Ok(list);
     }
@@ -81,3 +84,6 @@ public class ResultsController : ApiControllerBase
         return Ok(list);
     }
 }
+
+public record MyResultDto(int ResultId, int EnrolmentId, int ParticipantId, int EventId,
+    string EventName, DateTime EventDate, string CategoryName, TimeSpan FinishTime, int Position, int TotalFinishers);

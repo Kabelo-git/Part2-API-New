@@ -1,0 +1,69 @@
+﻿@model RaceDay.Web.Models.EventDetailsViewModel
+@{
+    ViewData["Title"] = Model.Event.EventName;
+    var textInfo = System.Globalization.CultureInfo.CurrentCulture.TextInfo;
+    var past = Model.Event.EventDate < DateTime.Now;
+}
+
+<a asp-controller="Home" asp-action="Index" class="text-decoration-none">&larr; Back to events</a>
+
+<div class="mt-2 mb-4">
+    <span class="badge bg-primary mb-2">@textInfo.ToTitleCase(Model.Event.EventType)</span>
+    <h2>@Model.Event.EventName</h2>
+    <p class="text-muted mb-1">@Model.Event.EventDate.ToString("dddd, dd MMMM yyyy, HH:mm")</p>
+    <p class="text-muted mb-1">@Model.Event.Location &middot; @Model.Event.Distance.ToString("0.##") km</p>
+    @if (!string.IsNullOrWhiteSpace(Model.Event.Description))
+    {
+        <p class="mt-3">@Model.Event.Description</p>
+    }
+</div>
+
+@if (Model.MyEnrolment != null)
+{
+    var badge = Model.MyEnrolment.Status == "Confirmed" ? "bg-success"
+              : Model.MyEnrolment.Status == "Pending" ? "bg-warning text-dark"
+              : "bg-secondary";
+    <div class="alert alert-success">
+        You're enrolled in the <strong>@Model.MyEnrolment.CategoryName</strong> category.
+        <span class="badge @badge ms-2">@Model.MyEnrolment.Status</span>
+    </div>
+}
+else if (past)
+{
+    <div class="alert alert-secondary">This event has already taken place.</div>
+}
+
+<h4>Categories</h4>
+
+@if (!Model.Categories.Any())
+{
+    <div class="alert alert-info">The organiser hasn't added any categories yet.</div>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr><th>Category</th><th>Distance</th><th>Price</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model.Categories)
+            {
+                <tr>
+                    <td>@c.CategoryName</td>
+                    <td>@c.Distance.ToString("0.##") km</td>
+                    <td>R @c.Price.ToString("0.00")</td>
+                    <td class="text-end">
+                        @if (Model.MyEnrolment == null && !past)
+                        {
+                            <form asp-controller="Participant" asp-action="Enrol" method="post">
+                                <input type="hidden" name="categoryId" value="@c.CategoryId" />
+                                <input type="hidden" name="eventId" value="@Model.Event.EventId" />
+                                <button type="submit" class="btn btn-sm btn-primary">Enrol</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

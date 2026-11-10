@@ -36,7 +36,15 @@
                         }
                         @if (role == "Participant")
                         {
-                            @* Participant links get added as we build those pages *@
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Participant" asp-action="MyEnrolments">My Enrolments</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Participant" asp-action="MyResults">My Results</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Participant" asp-action="Profile">Profile</a>
+                            </li>
                         }
                     </ul>
                     <ul class="navbar-nav">
