@@ -1,0 +1,71 @@
+﻿@model RaceDay.Web.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h2 class="mb-3">Organiser Dashboard</h2>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="fs-1 fw-bold">@Model.Rows.Count</div>
+                <div class="text-muted">Events created</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="fs-1 fw-bold">@Model.Rows.Sum(r => r.Enrolments)</div>
+                <div class="text-muted">Total enrolments</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="fs-1 fw-bold">@Model.Rows.Count(r => r.Event.EventDate >= DateTime.Now)</div>
+                <div class="text-muted">Upcoming events</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!Model.Rows.Any())
+{
+    <div class="alert alert-info">You haven't created any events yet. <a asp-action="CreateEvent">Create one</a>.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Enrolments</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.Rows)
+                {
+                    var upcoming = r.Event.EventDate >= DateTime.Now;
+                    <tr>
+                        <td>@r.Event.EventName</td>
+                        <td>@r.Event.EventDate.ToString("dd MMM yyyy, HH:mm")</td>
+                        <td>@r.Enrolments</td>
+                        <td>
+                            <span class="badge @(upcoming ? "bg-primary" : "bg-secondary")">@(upcoming ? "Upcoming" : "Completed")</span>
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Enrolments" asp-route-eventId="@r.Event.EventId" class="btn btn-sm btn-outline-primary">View enrolments</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

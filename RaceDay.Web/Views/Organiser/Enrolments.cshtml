@@ -1,0 +1,34 @@
+﻿@model RaceDay.Web.Models.EnrolmentsViewModel
+@{
+    ViewData["Title"] = "Enrolments";
+}
+
+<a asp-action="Events" class="text-decoration-none">&larr; Back to my events</a>
+<h2 class="mt-2">Enrolments: @Model.Event.EventName</h2>
+
+@if (!Model.Enrolments.Any())
+{
+    <div class="alert alert-info">Nobody has enrolled for this event yet.</div>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr><th>Participant</th><th>Category</th><th>Enrolled on</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model.Enrolments)
+            {
+                var badge = e.Status == "Confirmed" ? "bg-success"
+                : e.Status == "Pending" ? "bg-warning text-dark"
+                : "bg-secondary";
+                <tr>
+                    <td>@e.ParticipantName</td>
+                    <td>@e.CategoryName</td>
+                    <td>@e.EnrolmentDate.ToString("dd MMM yyyy")</td>
+                    <td><span class="badge @badge">@e.Status</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

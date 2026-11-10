@@ -1,0 +1,52 @@
+﻿@model RaceDay.Web.Models.ResultsViewModel
+@{
+    ViewData["Title"] = "Results";
+}
+
+<a asp-action="Events" class="text-decoration-none">&larr; Back to my events</a>
+<h2 class="mt-2">Results: @Model.Event.EventName</h2>
+
+@if (Model.Event.EventDate > DateTime.Now)
+{
+    <div class="alert alert-warning">This event hasn't taken place yet. Results are normally captured after it concludes.</div>
+}
+
+@if (!Model.Enrolments.Any())
+{
+    <div class="alert alert-info">Nobody has enrolled for this event, so there are no results to capture.</div>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr><th>Participant</th><th>Category</th><th>Finish time and position</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model.Enrolments)
+            {
+                var res = Model.Results.FirstOrDefault(r => r.EnrolmentId == e.EnrolmentId);
+                <tr>
+                    <td>@e.ParticipantName</td>
+                    <td>@e.CategoryName</td>
+                    <td>
+                        @if (res != null)
+                        {
+                            <span class="badge bg-success">Captured</span>
+                            <span class="ms-2">@(res.FinishTime.ToString(@"hh\:mm\:ss")) &middot; Position @res.Position</span>
+                        }
+                        else
+                        {
+                            <form asp-action="SaveResult" method="post" class="d-flex gap-2">
+                                <input type="hidden" name="EventId" value="@Model.Event.EventId" />
+                                <input type="hidden" name="EnrolmentId" value="@e.EnrolmentId" />
+                                <input name="FinishTime" class="form-control form-control-sm" style="max-width:130px" placeholder="01:45:30" />
+                                <input name="Position" type="number" min="1" class="form-control form-control-sm" style="max-width:100px" placeholder="Position" />
+                                <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

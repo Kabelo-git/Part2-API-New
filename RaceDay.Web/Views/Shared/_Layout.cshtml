@@ -28,6 +28,9 @@
                         @if (role == "Organiser")
                         {
                             <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Organiser" asp-action="Dashboard">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Organiser" asp-action="Events">My Events</a>
                             </li>
                         }
