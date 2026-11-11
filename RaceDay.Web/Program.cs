@@ -17,7 +17,14 @@ builder.Services.AddHttpClient<ApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
 })
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { UseCookies = false });
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        var handler = new HttpClientHandler { UseCookies = false };
+        if (builder.Configuration.GetValue<bool>("Api:AllowUntrustedCert"))
+            handler.ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        return handler;
+    });
 
 var app = builder.Build();
 
