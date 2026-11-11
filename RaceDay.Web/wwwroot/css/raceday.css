@@ -1,0 +1,25 @@
+﻿:root { --rd-orange: #ff5a1f; --rd-dark: #14213d; }
+body { font-family: "Segoe UI", system-ui, sans-serif; background: #f6f7fb; color: #1d2433; }
+h2, h4, h5 { font-weight: 700; color: var(--rd-dark); }
+a { color: var(--rd-orange); }
+.navbar { background: var(--rd-dark) !important; border: 0 !important; }
+.navbar .navbar-brand { color: #fff !important; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.navbar .nav-link, .navbar .navbar-text { color: #fff !important; }
+.navbar .nav-link:hover { color: var(--rd-orange) !important; }
+.navbar .btn-outline-secondary { color: #fff; border-color: #fff; }
+.navbar .btn-outline-secondary:hover { background: var(--rd-orange); border-color: var(--rd-orange); }
+.
+
+
+
+
+btn-primary { background: var(--rd-orange); border-color: var(--rd-orange); font-weight: 600; }
+.btn-primary:hover, .btn-primary:focus { background: #e04a12; border-color: #e04a12; }
+.btn-outline-primary { color: var(--rd-orange); border-color: var(--rd-orange); }
+.btn-outline-primary:hover { background: var(--rd-orange); border-color: var(--rd-orange); color: #ff
+
+
+f; }
+.badge.bg-primary { background: var(--rd-orange) !important; }
+.card { border: 0; border-radius: 12px; }
+.table > :not(caption) > * > * { background: transparent; }
